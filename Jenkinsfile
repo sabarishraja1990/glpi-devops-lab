@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo 'Starting the glpi-devops-lap
+                echo 'Starting the glpi-devops-lap'
                 checkout scm
             }
         }

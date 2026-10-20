@@ -33,7 +33,7 @@ pipeline {
                 dir("${GLPI_SOURCE}") {
                     sh 'test -f composer.json'
                     sh 'test -f .docker/app/Dockerfile'
-                    sh 'echo "GLPI source validation passed"'
+                    echo 'GLPI source validation passed'
                 }
             }
         }
@@ -45,8 +45,23 @@ pipeline {
                         docker build \
                           --build-arg PHP_VERSION=8.4 \
                           -f .docker/app/Dockerfile \
-                          -t glpi-ci-test:${BUILD_NUMBER} \
+                          -t ${GLPI_IMAGE}:${BUILD_NUMBER} \
                           .
+                    '''
+                }
+            }
+        }
+
+        stage('Test PHP Syntax') {
+            steps {
+                dir("${GLPI_SOURCE}") {
+                    sh '''
+                        docker run --rm \
+                          --mount type=bind,source="$(pwd)",target=/var/www/glpi,readonly \
+                          --workdir /var/www/glpi \
+                          --entrypoint php \
+                          ${GLPI_IMAGE}:${BUILD_NUMBER} \
+                          -l front/login.php
                     '''
                 }
             }
@@ -54,8 +69,8 @@ pipeline {
 
         stage('Verify Docker Image') {
             steps {
-                sh 'docker image inspect glpi-ci-test:${BUILD_NUMBER}'
-                echo 'GLPI test image built successfully'
+                sh 'docker image inspect ${GLPI_IMAGE}:${BUILD_NUMBER}'
+                echo 'Docker image verification passed'
             }
         }
     }
@@ -64,7 +79,6 @@ pipeline {
         success {
             echo 'GLPI CI pipeline completed successfully'
         }
-
         failure {
             echo 'Pipeline failed. Check Console Output.'
         }
